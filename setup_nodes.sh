@@ -26,14 +26,12 @@ else
   echo "PM2 sudah terinstal."
 fi
 
-# Nama folder utama
-main_folder="Glacier"
-
-# Buat folder utama jika belum ada
-mkdir -p $main_folder
-
-# Pindah ke folder utama
-cd $main_folder
+# Pastikan skrip dijalankan di folder Glacier
+current_folder=$(basename "$PWD")
+if [[ "$current_folder" != "Glacier" ]]; then
+  echo "Harap jalankan skrip ini di dalam folder Glacier."
+  exit 1
+fi
 
 # Download binary jika belum ada
 binary_file="verifier_linux_amd64"
@@ -76,8 +74,5 @@ EOL
   echo "Konfigurasi dibuat di: $config_file"
 done
 
-# Kembali ke direktori awal
-cd ..
-
 # Informasi selesai
-echo "Semua konfigurasi dan binary disiapkan di folder $main_folder."
+echo "Semua konfigurasi dan binary disiapkan di folder $(pwd)."
