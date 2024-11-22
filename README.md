@@ -21,7 +21,8 @@ cd Glacier
 ### 2. Setup Nodes
 > Run the setup script to configure the nodes:
 ```bash
-sudo ./setup_nodes.sh
+chmod +x setup_nodes.sh
+./setup_nodes.sh
 ```
 
 > Example input:
@@ -47,6 +48,7 @@ Glacier/
 ### 3. Run Nodes
 > Use the run_nodes.sh script to start all nodes using PM2:
 ```bash
+chmod +x run_nodes.sh
 ./run_nodes.sh
 ```
 
