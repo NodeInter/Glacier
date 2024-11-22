@@ -1,81 +1,80 @@
 #!/bin/bash
 
-# Nama folder utama
-main_folder="$(pwd)" # Mendapatkan path absolut dari folder saat ini
+# Nama image Docker
+docker_image="docker.io/glaciernetwork/glacier-verifier:v0.0.1"
 
-# Fungsi untuk memeriksa dan menginstal Node.js
-install_nodejs() {
-  if ! command -v node &> /dev/null || [[ $(node -v | grep -oP '\d+' | head -1) -lt 20 ]]; then
-    echo "Node.js tidak ditemukan atau versi kurang dari 20. Menginstal Node.js..."
-    # Unduh Node.js versi 20+
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt-get install -y nodejs
-    echo "Node.js berhasil diinstal. Versi saat ini:"
-    node -v
+# Fungsi untuk menginstal Docker
+install_docker() {
+  echo "Memeriksa apakah Docker terinstal..."
+  if ! command -v docker &> /dev/null; then
+    echo "Docker tidak ditemukan. Memulai instalasi..."
+    # Tambahkan repositori Docker
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    echo "Docker berhasil diinstal."
   else
-    echo "Node.js sudah terinstal. Versi saat ini:"
-    node -v
+    echo "Docker sudah terinstal."
   fi
+
+  # Tambahkan pengguna ke grup Docker
+  sudo usermod -aG docker $USER
+  newgrp docker
+
+  # Verifikasi instalasi Docker
+  docker --version
 }
 
-# Fungsi untuk memeriksa dan menginstal PM2
-install_pm2() {
-  if ! command -v pm2 &> /dev/null; then
-    echo "PM2 tidak ditemukan. Menginstal PM2..."
-    npm install -g pm2
-    if [ $? -ne 0 ]; then
-      echo "Gagal menginstal PM2. Periksa instalasi Node.js dan npm."
-      exit 1
-    fi
+# Fungsi untuk menginstal Docker Compose (opsional)
+install_docker_compose() {
+  echo "Memeriksa apakah Docker Compose terinstal..."
+  if ! command -v docker-compose &> /dev/null; then
+    echo "Docker Compose tidak ditemukan. Memulai instalasi..."
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    echo "Docker Compose berhasil diinstal."
   else
-    echo "PM2 sudah terinstal."
-    pm2 -v
+    echo "Docker Compose sudah terinstal."
   fi
+
+  # Verifikasi instalasi Docker Compose
+  docker-compose --version
 }
 
-# Periksa Node.js dan PM2
-install_nodejs
-install_pm2
-
-# Path binary verifier
-binary_path="$main_folder/verifier_linux_amd64"
-
-# Unduh binary jika belum ada
-if [ ! -f "$binary_path" ]; then
-  echo "Mengunduh binary verifier_linux_amd64..."
-  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.1-beta/verifier_linux_amd64 -O "$binary_path"
-fi
-
-# Berikan izin eksekusi pada binary
-chmod +x "$binary_path"
-echo "Binary verifier_linux_amd64 sudah siap di $binary_path."
+# Pastikan Docker dan Docker Compose terinstal
+install_docker
+install_docker_compose
 
 # Prompt untuk memasukkan daftar private key
 echo "Masukkan daftar Private Key, pisahkan dengan spasi:"
 read -a private_keys
 
-# Loop untuk membuat folder node dan file konfigurasi
+# Loop untuk membuat dan menjalankan container untuk setiap private key
 for i in "${!private_keys[@]}"; do
-  node_folder="${main_folder%/}/node$i"
-  config_file="${node_folder%/}/config.yaml"
+  private_key="${private_keys[$i]}"
+  container_name="glacier-node$i"
 
-  # Buat folder untuk node jika belum ada
-  mkdir -p "$node_folder"
+  # Jalankan Docker container
+  echo "Menjalankan container untuk $container_name dengan PRIVATE_KEY: $private_key"
+  docker run -d \
+    -e PRIVATE_KEY="$private_key" \
+    --name "$container_name" \
+    "$docker_image"
 
-  # Generate config.yaml
-  cat <<EOL > "$config_file"
-Http:
-  Listen: "127.0.0.1:$((10801 + i))"
-Network: "testnet"
-RemoteBootstrap: "https://glacier-labs.github.io/node-bootstrap/"
-Keystore:
-  PrivateKey: "${private_keys[$i]}"
-TEE:
-  IpfsURL: "https://greenfield.onebitdev.com/ipfs/"
-EOL
+  # Verifikasi jika container berhasil dijalankan
+  if [ $? -eq 0 ]; then
+    echo "Container $container_name berhasil dijalankan."
+  else
+    echo "Gagal menjalankan container $container_name. Periksa konfigurasi Docker Anda."
+  fi
 
-  echo "Config file dibuat di $config_file"
+  # Tambahkan delay untuk memastikan Docker tidak kelebihan beban
   sleep 0.1
 done
 
-echo "Semua node telah dikonfigurasi di $main_folder."
+# Tampilkan semua container yang berjalan
+echo "Semua container telah dijalankan. Berikut adalah daftar container yang aktif:"
+docker ps
