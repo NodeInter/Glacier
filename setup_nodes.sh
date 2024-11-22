@@ -56,7 +56,6 @@ read -a private_keys
 
 # Loop untuk membuat folder node dan file konfigurasi
 for i in "${!private_keys[@]}"; do
-  # Hapus garis miring ganda jika ada
   node_folder="${main_folder%/}/node$i"
   config_file="${node_folder%/}/config.yaml"
 
@@ -76,8 +75,6 @@ TEE:
 EOL
 
   echo "Config file dibuat di $config_file"
-
-  # Tambahkan delay untuk memastikan sistem selesai memproses sebelum lanjut
   sleep 0.1
 done
 
