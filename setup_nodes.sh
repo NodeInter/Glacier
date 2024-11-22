@@ -43,7 +43,7 @@ binary_path="$main_folder/verifier_linux_amd64"
 # Unduh binary jika belum ada
 if [ ! -f "$binary_path" ]; then
   echo "Mengunduh binary verifier_linux_amd64..."
-  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.1-beta/verifier_linux_amd64 -O $binary_path
+  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.1-beta/verifier_linux_amd64 -O "$binary_path"
 fi
 
 # Berikan izin eksekusi pada binary
@@ -56,8 +56,9 @@ read -a private_keys
 
 # Loop untuk membuat folder node dan file konfigurasi
 for i in "${!private_keys[@]}"; do
-  node_folder="$main_folder/node$i"
-  config_file="$node_folder/config.yaml"
+  # Hapus garis miring ganda jika ada
+  node_folder="${main_folder%/}/node$i"
+  config_file="${node_folder%/}/config.yaml"
 
   # Buat folder untuk node jika belum ada
   mkdir -p "$node_folder"
@@ -77,7 +78,7 @@ EOL
   echo "Config file dibuat di $config_file"
 
   # Tambahkan delay untuk memastikan sistem selesai memproses sebelum lanjut
-  sleep 1
+  sleep 0.1
 done
 
 echo "Semua node telah dikonfigurasi di $main_folder."
