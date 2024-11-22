@@ -1,5 +1,31 @@
 #!/bin/bash
 
+# Fungsi untuk memeriksa dan menginstal Node.js
+install_nodejs() {
+  if ! command -v node &> /dev/null || [[ $(node -v | grep -oP '\d+' | head -1) -lt 20 ]]; then
+    echo "Node.js tidak ditemukan atau versi kurang dari 20. Menginstal Node.js..."
+    # Unduh Node.js versi 20+
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    echo "Node.js berhasil diinstal. Versi saat ini:"
+    node -v
+  else
+    echo "Node.js sudah terinstal. Versi saat ini:"
+    node -v
+  fi
+}
+
+# Periksa apakah Node.js tersedia
+install_nodejs
+
+# Periksa apakah PM2 tersedia
+if ! command -v pm2 &> /dev/null; then
+  echo "PM2 tidak ditemukan. Menginstal PM2..."
+  npm install -g pm2
+else
+  echo "PM2 sudah terinstal."
+fi
+
 # Nama folder utama
 main_folder="Glacier"
 
