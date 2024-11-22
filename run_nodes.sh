@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Nama folder utama
-main_folder="$(pwd)" # Path absolut folder Glacier
+main_folder="$(pwd)" # Mendapatkan path absolut dari folder saat ini
 
 # Path binary verifier
 binary_path="$main_folder/verifier_linux_amd64"
