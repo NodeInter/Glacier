@@ -20,7 +20,7 @@ echo "[" > $pm2_config
 for node_dir in "$main_folder"/node*/; do
   node_dir="${node_dir%/}"
   node_name=$(basename "$node_dir")
-  config_file="${node_dir%/}/config.yaml"
+  config_file="${node_dir}/config.yaml"
 
   # Verifikasi bahwa file config.yaml ada
   if [ ! -f "$config_file" ]; then
