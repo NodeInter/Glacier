@@ -18,6 +18,8 @@ echo "[" > $pm2_config
 
 # Loop untuk setiap folder node
 for node_dir in "$main_folder"/node*/; do
+  # Pastikan tidak ada garis miring ganda
+  node_dir="${node_dir%/}"
   node_name=$(basename "$node_dir")
   config_file="$node_dir/config.yaml"
 
@@ -35,14 +37,21 @@ for node_dir in "$main_folder"/node*/; do
   }," >> $pm2_config
 done
 
-# Hapus koma terakhir dan tutup array
-sed -i '$ s/,$//' $pm2_config
-echo "]" >> $pm2_config
+# Periksa apakah file JSON memiliki konten selain pembuka array
+if grep -q "\"name\":" "$pm2_config"; then
+  # Hapus koma terakhir dan tutup array
+  sed -i '$ s/,$//' $pm2_config
+  echo "]" >> $pm2_config
 
-# Jalankan node dengan PM2
-pm2 start $pm2_config
+  # Jalankan node dengan PM2
+  pm2 start $pm2_config
 
-# Simpan konfigurasi PM2
-pm2 save
+  # Simpan konfigurasi PM2
+  pm2 save
 
-echo "Semua node dijalankan menggunakan PM2."
+  echo "Semua node dijalankan menggunakan PM2."
+else
+  # Jika tidak ada node ditemukan
+  echo "]" >> $pm2_config
+  echo "Tidak ada node yang ditemukan. File konfigurasi PM2 tetap dibuat di $pm2_config, tetapi tidak ada proses yang dijalankan."
+fi
