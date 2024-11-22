@@ -75,6 +75,9 @@ TEE:
 EOL
 
   echo "Config file dibuat di $config_file"
+
+  # Tambahkan delay untuk memastikan sistem selesai memproses sebelum lanjut
+  sleep 1
 done
 
 echo "Semua node telah dikonfigurasi di $main_folder."
