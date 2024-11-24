@@ -1,35 +1,48 @@
 #!/bin/bash
 
-# Nama image Docker yang akan digunakan
-docker_image="docker.io/glaciernetwork/glacier-verifier:v0.0.1"
+# Nama folder utama
+main_folder="$(pwd)" # Mendapatkan path absolut dari folder saat ini
 
-# Prompt untuk memasukkan daftar private key
-echo "Masukkan daftar Private Key, pisahkan dengan spasi:"
-read -a private_keys
+# Path binary verifier
+binary_path="$main_folder/verifier_linux_amd64"
 
-# Loop untuk membuat dan menjalankan container untuk setiap private key
-for i in "${!private_keys[@]}"; do
-  private_key="${private_keys[$i]}"
-  container_name="glacier-node$i"
+# Periksa apakah binary ada
+if [ ! -f "$binary_path" ]; then
+  echo "Binary verifier_linux_amd64 tidak ditemukan di $binary_path. Jalankan setup_nodes.sh terlebih dahulu."
+  exit 1
+fi
 
-  # Jalankan Docker container
-  echo "Menjalankan container untuk $container_name dengan PRIVATE_KEY: $private_key"
-  docker run -d \
-    -e PRIVATE_KEY="$private_key" \
-    --name "$container_name" \
-    "$docker_image"
+# Buat file JSON untuk PM2
+pm2_config="pm2-glacier.json"
+echo "[" > $pm2_config
 
-  # Verifikasi jika container berhasil dijalankan
-  if [ $? -eq 0 ]; then
-    echo "Container $container_name berhasil dijalankan."
-  else
-    echo "Gagal menjalankan container $container_name. Periksa konfigurasi Docker Anda."
+# Loop untuk setiap folder node
+for node_dir in "$main_folder"/node*/; do
+  node_name=$(basename "$node_dir")
+  config_file="$node_dir/config.yaml"
+
+  # Verifikasi bahwa file config.yaml ada
+  if [ ! -f "$config_file" ]; then
+    echo "Config file not found in $config_file. Skipping $node_name."
+    continue
   fi
 
-  # Tambahkan delay untuk memastikan Docker tidak kelebihan beban
-  sleep 0.1
+  # Tambahkan entri ke file konfigurasi PM2
+  echo "  {
+      \"name\": \"glacier-$node_name\",
+      \"script\": \"$binary_path\",
+      \"args\": \"--config $config_file\"
+  }," >> $pm2_config
 done
 
-# Tampilkan semua container yang berjalan
-echo "Semua container telah dijalankan. Berikut adalah daftar container yang aktif:"
-docker ps
+# Hapus koma terakhir dan tutup array
+sed -i '$ s/,$//' $pm2_config
+echo "]" >> $pm2_config
+
+# Jalankan node dengan PM2
+pm2 start $pm2_config
+
+# Simpan konfigurasi PM2
+pm2 save
+
+echo "Semua node dijalankan menggunakan PM2."
