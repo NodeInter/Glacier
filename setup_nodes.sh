@@ -1,47 +1,46 @@
 #!/bin/bash
 
-# Fungsi untuk menginstal Docker
-install_docker() {
-  echo "Memeriksa apakah Docker terinstal..."
-  if ! command -v docker &> /dev/null; then
-    echo "Docker tidak ditemukan. Memulai instalasi..."
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    echo "Docker berhasil diinstal."
-  else
-    echo "Docker sudah terinstal."
-  fi
+# Nama folder utama
+main_folder="$(pwd)" # Mendapatkan path absolut dari folder saat ini
 
-  # Tambahkan pengguna ke grup Docker
-  sudo usermod -aG docker $USER
-  newgrp docker
+# Path binary verifier
+binary_path="$main_folder/verifier_linux_amd64"
 
-  # Verifikasi instalasi Docker
-  docker --version
-}
+# Unduh binary jika belum ada
+if [ ! -f "$binary_path" ]; then
+  echo "Mengunduh binary verifier_linux_amd64..."
+  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.1-beta/verifier_linux_amd64 -O $binary_path
+fi
 
-# Fungsi untuk menginstal Docker Compose (opsional)
-install_docker_compose() {
-  echo "Memeriksa apakah Docker Compose terinstal..."
-  if ! command -v docker-compose &> /dev/null; then
-    echo "Docker Compose tidak ditemukan. Memulai instalasi..."
-    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-    echo "Docker Compose berhasil diinstal."
-  else
-    echo "Docker Compose sudah terinstal."
-  fi
+# Berikan izin eksekusi pada binary
+chmod +x "$binary_path"
+echo "Binary verifier_linux_amd64 sudah siap di $binary_path."
 
-  # Verifikasi instalasi Docker Compose
-  docker-compose --version
-}
+# Prompt untuk memasukkan daftar private key
+echo "Masukkan daftar Private Key, pisahkan dengan spasi:"
+read -a private_keys
 
-# Jalankan fungsi instalasi
-install_docker
-install_docker_compose
+# Loop untuk membuat folder node dan file konfigurasi
+for i in "${!private_keys[@]}"; do
+  node_folder="$main_folder/node$i"
+  config_file="$node_folder/config.yaml"
 
-echo "Docker dan Docker Compose berhasil diinstal. Sistem siap untuk menjalankan node."
+  # Buat folder untuk node jika belum ada
+  mkdir -p "$node_folder"
+
+  # Generate config.yaml
+  cat <<EOL > "$config_file"
+Http:
+  Listen: "127.0.0.1:$((10801 + i))"
+Network: "testnet"
+RemoteBootstrap: "https://glacier-labs.github.io/node-bootstrap/"
+Keystore:
+  PrivateKey: "${private_keys[$i]}"
+TEE:
+  IpfsURL: "https://greenfield.onebitdev.com/ipfs/"
+EOL
+
+  echo "Config file dibuat di $config_file"
+done
+
+echo "Semua node telah dikonfigurasi di $main_folder."
