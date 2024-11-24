@@ -12,10 +12,11 @@ install_nodejs() {
     sudo apt-get install -y nodejs
     echo "Node.js berhasil diinstal. Versi saat ini:"
     node -v
- else
+  else
     echo "Node.js sudah terinstal. Versi saat ini:"
     node -v
   fi
+}
 
 # Fungsi untuk memeriksa dan menginstal PM2
 install_pm2() {
@@ -27,7 +28,7 @@ install_pm2() {
       exit 1
     fi
   else
-    echo "PM2 sudah terinstal."
+    echo "PM2 sudah terinstal. Versi saat ini:"
     pm2 -v
   fi
 }
@@ -35,13 +36,14 @@ install_pm2() {
 # Periksa Node.js dan PM2
 install_nodejs
 install_pm2
+
 # Path binary verifier
 binary_path="$main_folder/verifier_linux_amd64"
 
 # Unduh binary jika belum ada
 if [ ! -f "$binary_path" ]; then
   echo "Mengunduh binary verifier_linux_amd64..."
-  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.2-beta/verifier_linux_amd64 -O $binary_path
+  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.2-beta/verifier_linux_amd64 -O "$binary_path"
 fi
 
 # Berikan izin eksekusi pada binary
