@@ -3,13 +3,45 @@
 # Nama folder utama
 main_folder="$(pwd)" # Mendapatkan path absolut dari folder saat ini
 
+# Fungsi untuk memeriksa dan menginstal Node.js
+install_nodejs() {
+  if ! command -v node &> /dev/null || [[ $(node -v | grep -oP '\d+' | head -1) -lt 20 ]]; then
+    echo "Node.js tidak ditemukan atau versi kurang dari 20. Menginstal Node.js..."
+    # Unduh Node.js versi 20+
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    echo "Node.js berhasil diinstal. Versi saat ini:"
+    node -v
+ else
+    echo "Node.js sudah terinstal. Versi saat ini:"
+    node -v
+  fi
+
+# Fungsi untuk memeriksa dan menginstal PM2
+install_pm2() {
+  if ! command -v pm2 &> /dev/null; then
+    echo "PM2 tidak ditemukan. Menginstal PM2..."
+    npm install -g pm2
+    if [ $? -ne 0 ]; then
+      echo "Gagal menginstal PM2. Periksa instalasi Node.js dan npm."
+      exit 1
+    fi
+  else
+    echo "PM2 sudah terinstal."
+    pm2 -v
+  fi
+}
+
+# Periksa Node.js dan PM2
+install_nodejs
+install_pm2
 # Path binary verifier
 binary_path="$main_folder/verifier_linux_amd64"
 
 # Unduh binary jika belum ada
 if [ ! -f "$binary_path" ]; then
   echo "Mengunduh binary verifier_linux_amd64..."
-  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.1-beta/verifier_linux_amd64 -O $binary_path
+  wget https://github.com/Glacier-Labs/node-bootstrap/releases/download/v0.0.2-beta/verifier_linux_amd64 -O $binary_path
 fi
 
 # Berikan izin eksekusi pada binary
