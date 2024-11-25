@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Nama image Docker yang akan digunakan
-docker_image="docker.io/glaciernetwork/glacier-verifier:v0.0.1"
+docker_image="docker.io/glaciernetwork/glacier-verifier:v0.0.2"
 
 # Prompt untuk memasukkan daftar private key
 echo "Masukkan daftar Private Key, pisahkan dengan spasi:"
