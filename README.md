@@ -77,6 +77,13 @@ done
 ```
 docker rm <container_name>
 ```
+- Delete all nodes:
+```
+docker ps -a --filter "name=^glacier-node" --format "{{.Names}}" | while read container_name; do
+  echo "Menghapus container: $container_name"
+  docker rm "$container_name"
+done
+```
 
 ### 6. Updating Binary or Docker-Image
 > Update Binary:
