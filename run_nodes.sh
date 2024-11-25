@@ -15,6 +15,7 @@ for i in "${!private_keys[@]}"; do
   # Jalankan Docker container
   echo "Menjalankan container untuk $container_name dengan PRIVATE_KEY: $private_key"
   docker run -d \
+    --memory=840m \
     -e PRIVATE_KEY="$private_key" \
     --name "$container_name" \
     "$docker_image"
