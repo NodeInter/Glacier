@@ -27,7 +27,7 @@ for i in "${!private_keys[@]}"; do
   fi
 
   # Tambahkan delay untuk memastikan Docker tidak kelebihan beban
-  sleep 0.1
+  sleep 1
 done
 
 # Tampilkan semua container yang berjalan
